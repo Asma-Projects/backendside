@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+var fs = require('fs');
 const pdfjsLib = require('pdfjs-dist');
 var fileDownload = require('js-file-download');
 import Tesseract from 'tesseract.js'
@@ -111,7 +112,14 @@ app.set('view engine', 'ejs');
         Tesseract.recognize(ImagePath, {
             lang: 'eng'
         }).then(result => {
-            console.log(result.text);
+            fs.writeFile('./tmp/myfile.txt', result.text, function (err) {
+
+                if (err) throw err;
+        
+                console.log('It\'s saved! in same location.');
+        
+            });
+        
         });
     }
     
@@ -124,10 +132,13 @@ app.set('view engine', 'ejs');
  app.post('/showfile',  function(req, res)  {
 
 
-    
-// Tesseract.recognize('./tmp/cont-1.jpg',  { lang: path.resolve(__dirname, './langs') }) // Or whichever lang you have downloaded to langs/
-//       .then((result) => console.log(result.text));
-   
+    fs.writeFile('./tmp/message.txt', 'Just now, we have created this file', function (err) {
+
+        if (err) throw err;
+
+        console.log('It\'s saved! in same location.');
+
+    });
 
     
 
