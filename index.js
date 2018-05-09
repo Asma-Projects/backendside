@@ -1,6 +1,8 @@
 import express from "express";
 import path from "path";
-
+const pdfjsLib = require('pdfjs-dist');
+var fileDownload = require('js-file-download');
+import Tesseract from 'tesseract.js'
 import bodyParser from "body-parser";
 import dotenv from "dotenv";
 import Promise from "bluebird";
@@ -15,6 +17,7 @@ const Grid = require('gridfs-stream');
 const methodOverride = require('method-override');
 import pdf from 'pdf-poppler'
 const router = express.Router();
+const getPageCount = require('docx-pdf-pagecount');
 
 
 const app = express();
@@ -61,7 +64,6 @@ app.set('view engine', 'ejs');
  const upload = multer({storage}); //provide the return value from 
  // Create storage engine
  
-
  // @route GET /
  // @desc Loads form
  
@@ -75,7 +77,8 @@ app.set('view engine', 'ejs');
  app.post('/convert',  upload.single('file'),(req, res) =>{
 
     let file = req.file.path;
- 
+ console.log(path.basename(file,path.extname(file)))
+  
   let opts = {
       format: 'jpeg',
       out_dir: "./tmp",
@@ -88,9 +91,48 @@ app.set('view engine', 'ejs');
       })
       .catch(error => {
           console.error(error);
-      })
+      
+      }).then(function(){
+    pdfjsLib.getDocument(file)
+    .then(function (doc) {
+        let numPages = doc.numPages;
+    console.log(numPages)
+    let i=1 ;
+    for(i=1;i<numPages+1;i++){
+        let newfile='./tmp/' + path.basename(file,path.extname(file))+'-'+ i +'.jpg'
+        console.log(newfile)
+        const Tesseract = require('tesseract.js').create({
+            workerPath: path.join(__dirname, '../src/node/worker.js'),
+            langPath: path.join(__dirname, '../src/langs'),
+            corePath: path.join(__dirname, '../src/node/index.js')
+        });
+        
+        var ImagePath= './tmp/' + path.basename(file,path.extname(file))+'-'+ i +'.jpg'
+        Tesseract.recognize(ImagePath, {
+            lang: 'eng'
+        }).then(result => {
+            console.log(result.text);
+        });
+    }
+    
+  })
+  
+    
+  })
+  res.redirect('/');
+});
+ app.post('/showfile',  function(req, res)  {
+
+
+    
+// Tesseract.recognize('./tmp/cont-1.jpg',  { lang: path.resolve(__dirname, './langs') }) // Or whichever lang you have downloaded to langs/
+//       .then((result) => console.log(result.text));
+   
+
+    
+
   res.redirect('/');
 });
  
 app.listen(8080, () => console.log("Running on localhost:8080"));
-export default router;
+
